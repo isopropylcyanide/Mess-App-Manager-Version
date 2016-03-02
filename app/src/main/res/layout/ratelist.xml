@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical"
+    android:descendantFocusability="beforeDescendants"
+    android:focusableInTouchMode="true"
+    android:background="#FFFFFF"
+    android:weightSum="1">
+
+
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="50sp"
+        android:layout_marginTop="40sp"
+        android:layout_marginLeft="10sp"
+        android:layout_weight="0.13">
+        <Spinner
+            android:layout_width="350sp"
+            android:layout_height="wrap_content"
+            android:id="@+id/items"
+            android:layout_gravity="center_horizontal" />
+
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="65sp"
+        android:layout_marginTop="100sp"
+        android:layout_marginLeft="20sp">
+
+
+        <TextView
+            android:id="@+id/textView1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:text="Current Rate"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_marginLeft="15sp"
+            android:gravity="center_horizontal"
+            android:textColor="#2196F3" />
+
+        <TextView
+            android:layout_width="140sp"
+            android:layout_height="30sp"
+            android:id="@+id/currRate"
+            android:layout_marginLeft="30sp" />
+
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="65sp"
+        android:layout_marginLeft="20sp" >
+
+        <TextView
+            android:id="@+id/textView4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:text="Set New Rate"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_marginLeft="15sp"
+            android:gravity="center_horizontal"
+            android:textColor="#2196F3" />
+
+        <EditText
+            android:layout_width="140sp"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:ems="10"
+            android:id="@+id/newRate"
+            android:layout_marginLeft="30sp"
+            android:hint="Enter new rate" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/submit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/textView3"
+        android:layout_below="@+id/new_pass_again"
+        android:text="Submit"
+        android:textColor="#2196F3"
+        android:background="#BBDEFB"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="30sp" />
+
+</LinearLayout>
