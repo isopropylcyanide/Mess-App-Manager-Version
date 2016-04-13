@@ -4,6 +4,27 @@ package com.example.cyanide.messMunshi.background;
 public class Constants {
 
     public static final String DATABASE_URL = "https://mess-munshi.firebaseio.com/";
+
+    /*------------------ Incorporate database parameter of student app*/
+
+    public static final String STUDENT_DATABASE_URL = "https://sweltering-heat-4362.firebaseio.com/";
+    public static final String STUDENT_DATABASE_DIET_TABLE = "roll_day_diet";
+    public static final String STUDENT_DIET_BFAST = "b";
+    public static final String STUDENT_DIET_LUNCH = "l";
+    public static final String STUDENT_DIET_DINNER = "d";
+    public static final String STUDENT_DIET_EXTRAS = "extras";
+    public static final String STUDENT_DIET_GUEST = "guest";
+
+    /*Handle mess off table fields*/
+    public static final String STUDENT_MESS_OFF_TABLE = "user_mess_off";
+    public static final String STUDENT_MESS_OFF_START_DAY = "start_date";
+    public static final String STUDENT_MESS_OFF_END_DAY = "end_date";
+    public static final String STUDENT_MESS_OFF_START_DIET = "start_meal";
+    public static final String STUDENT_MESS_OFF_END_DIET = "end_meal";
+
+    /*----------------------------------Student app database ends*/
+
+
     public static final String USER_LOGIN_TABLE = "login_data/";
     public static final String USER_PROFILE_TABLE = "user_student_data/";
 
@@ -14,15 +35,10 @@ public class Constants {
     public static final Integer SESSION_TIMEOUT  = 15 * 60;  //15 min seconds
     public static final String LAST_LOGIN_CHILD = "last_login";
 
-    public static final String USER_MESS_TABLE  = "user_mess_off/";
     public static final String MESS_ITEM_TABLE  = "mess_item_rates/";
     public static final String MESS_ITEM_RATE = "Rate";
     public static final String MESS_ITEM_QTY = "Cumulative Quantity";
 
-    public static final String USER_MESS_START_DATE_KEY = "start_date";
-    public static final String USER_MESS_END_DATE_KEY = "end_date";
-    public static final String USER_MESS_START_MEAL_KEY = "start_meal";
-    public static final String USER_MESS_END_MEAL_KEY = "end_meal";
 
     public static final String DATE_FORMAT     = "EEE MMM dd hh:mm:ss zzz yyyy";
     public static final Long DIET_RECORD_MONTHS = 1L;

@@ -32,33 +32,31 @@ import java.util.Date;
 import java.util.Map;
 import java.util.HashMap;
 
-
 public class Login extends AppCompatActivity{
 
     private Button btnSignIn;
     private EditText etUserName, etPass;
     private String login_status;
-    private String user_login_table;
-    private String password_child, session_child,last_login_child;
-    private String firebase_Url,database_Url;
 
     private String entered_user;
     private String entered_pass;
     private Firebase ref;
-    private ValueEventListener mConnectedListener, validUserListener;
-    private long session_timeout;
+    private ValueEventListener mConnectedListener;
     private SimpleDateFormat format;
-    private CoordinatorLayout coordinatorLayout;
 
     private class firebase_async extends AsyncTask<String, Void, Void> {
         //An Async class to deal with the synchronisation of listener
         private Context async_context;
         private ProgressDialog pd;
-        private String actual_pass;
+        private String actual_pass, last_login, session_val;
+        private boolean userExists;
+        private String entered_user, entered_pass;
 
         public firebase_async(Context context){
             this.async_context = context;
             pd = new ProgressDialog(async_context);
+            login_status = "0";
+            userExists = false;
         }
 
         @Override
@@ -72,51 +70,25 @@ public class Login extends AppCompatActivity{
         @Override
         protected Void doInBackground(final String... params) {
 
-            final String entered_user = params[0];
-            final String entered_pass = params[1];
+            entered_user = params[0];
+            entered_pass = params[1];
             final Object lock = new Object();
 
-            validUserListener = ref.addValueEventListener(new ValueEventListener() {
+            ref.child(entered_user).addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
 
                     synchronized (lock) {
-                        login_status = "0";
-
                         for (DataSnapshot ds : dataSnapshot.getChildren()) {
-                            HashMap<String, Object> existUser = (HashMap<String, Object>) ds.getValue();
+                            userExists = true;
+                            if (ds.getKey().equals(Constants.PASSWORD_CHILD))
+                                actual_pass = ds.getValue().toString();
 
-                            if (entered_user.equals(ds.getKey())) {
+                            else if (ds.getKey().equals(Constants.SESSION_CHILD))
+                                session_val = ds.getValue().toString();
 
-                                actual_pass = existUser.get(password_child).toString();
-                                int session_val = Integer.parseInt(existUser.get(session_child).toString());
-
-                                if (entered_pass.equals(actual_pass)) {
-                                    if (session_val == 0) {
-                                        login_status = "-1";
-
-                                        /*if difference b/w curr timestamp and stored timestamp
-                                        is greater than session_timeout, allow log-in by setting session bit*/
-
-                                        String last_login = existUser.get(last_login_child).toString();
-                                        try {
-                                            Date last_date = format.parse(last_login);
-                                            Date curr_date = new Date();
-                                            long diff = (curr_date.getTime() - last_date.getTime())/1000;
-
-                                            if (diff >= session_timeout)
-                                                login_status = "1";
-
-                                        } catch (ParseException e) {
-                                            e.printStackTrace();
-                                        }
-                                    }
-                                    else
-                                        login_status = "1";
-                                    lock.notifyAll();
-                                    break;
-                                }
-                            }
+                            else if (ds.getKey().equals(Constants.LAST_LOGIN_CHILD))
+                                last_login = ds.getValue().toString();
                         }
                         lock.notifyAll();
                     }
@@ -142,10 +114,28 @@ public class Login extends AppCompatActivity{
         protected void onPostExecute(Void aVoid) {
             //Handles the stuff after the synchronisation with the firebase listener has been achieved
             //The main UI is already idle by this moment
-
             super.onPostExecute(aVoid);
-            System.out.println("After async: " + login_status);
+            if (!userExists || !entered_pass.equals(actual_pass))
+                login_status = "0";
 
+            else if (entered_pass.equals(actual_pass)){
+                if (session_val.equals("1"))
+                    login_status = "1";
+
+                else{//session is not valid. Check for timeout maybe
+                    login_status = "-1";
+                    try {
+                        Date last_date = format.parse(last_login);
+                        Date curr_date = new Date();
+
+                        if ((curr_date.getTime() - last_date.getTime()) / 1000 >= Constants.SESSION_TIMEOUT)
+                            login_status = "1";
+
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
             //Show the log in progress_bar for at least a few milliseconds
             Handler handler = new Handler();
 
@@ -153,45 +143,33 @@ public class Login extends AppCompatActivity{
                 public void run() {
                     pd.dismiss();
                     if (login_status.equals("1")) {
-
                         //Reset the session variable
-                        Firebase updated_ref = new Firebase(firebase_Url).child(entered_user);
-                        Map<String, Object> existUser = new HashMap<String, Object>();
-                        Map<String, Object> user_args = new HashMap<String, Object>();
 
-                        existUser.put(session_child, "0");
-                        existUser.put(password_child, actual_pass);
-                        existUser.put(last_login_child, new Date().toString());
-                        updated_ref.updateChildren(existUser);
+                        ref.child(entered_user).child(Constants.SESSION_CHILD).setValue("0");
+                        ref.child(entered_user).child(Constants.LAST_LOGIN_CHILD).setValue(new Date().toString());
 
-                        user_args.put("EXTRA_FireBase_Node_Ref", database_Url + updated_ref.getPath().toString());
-                        user_args.put("EXTRA_Node_Session_Field", session_child);
-                        user_args.put("EXTRA_Node_Password_Field", password_child);
-                        user_args.put("EXTRA_Node_Last_Log_Field", last_login_child);
-
-                        StaticUserMap.getInstance().setUserMap(existUser);
-                        StaticUserMap.getInstance().setUserViewExtras(user_args);
-                        StaticUserMap.getInstance()._userName = entered_user;
+                        /*Crucial Data. If you mess this up, data could be fetched for other users*/
+                        StaticUserMap.getInstance().set_password(actual_pass);
+                        StaticUserMap.getInstance()._roll = entered_user;
+                        /*Crucial Data ends*/
 
                         Intent launchUser = new Intent(Login.this, UserView.class);
                         startActivity(launchUser);
 
-                        //Remove listener as it is not required anymore. Also pop off the current activity
-                        ref.removeEventListener(validUserListener);
                         finish();
 
                     } else if (login_status.equals("-1")) {
-                        Snackbar.make(coordinatorLayout, "Maximum Login Limit Reached", Snackbar.LENGTH_SHORT).show();
+                        Snackbar.make(getWindow().getDecorView(), "Maximum Login Limit Reached", Snackbar.LENGTH_SHORT).show();
                         etPass.setText("");
 
                     } else if (login_status.equals("0")) {
-                        Snackbar.make(coordinatorLayout, "Password/User combination doesn't match", Snackbar.LENGTH_SHORT).show();
+                        Snackbar.make(getWindow().getDecorView(), "Password/User combination doesn't match", Snackbar.LENGTH_SHORT).show();
                         etPass.setText("");
                     } else
-                        Snackbar.make(coordinatorLayout, "No internet connection. Try Again Later", Snackbar.LENGTH_SHORT).show();
+                        Snackbar.make(getWindow().getDecorView(), "No internet connection. Try Again Later", Snackbar.LENGTH_SHORT).show();
 
                 }
-            }, 500);  // 500 milliseconds
+            }, 100);  // 100 milliseconds
         }
         //end firebase_async_class
     }
@@ -221,12 +199,13 @@ public class Login extends AppCompatActivity{
             public void onDataChange(DataSnapshot dataSnapshot) {
                 boolean connected = (Boolean) dataSnapshot.getValue();
                 if (connected) {
+
                     StaticUserMap.getInstance().setConnectedStatus(true);
-                    Snackbar.make(coordinatorLayout,"Connected to Firebase", Snackbar.LENGTH_SHORT).show();
+                    Snackbar.make(getWindow().getDecorView(),"Connected", Snackbar.LENGTH_SHORT).show();
                 }
                 else {
                     StaticUserMap.getInstance().setConnectedStatus(false);
-                    Snackbar.make(coordinatorLayout, "Disconnected from Firebase", Snackbar.LENGTH_SHORT).show();
+                    Snackbar.make(getWindow().getDecorView(), "Disconnected", Snackbar.LENGTH_SHORT).show();
                 }
             }
 
@@ -245,21 +224,13 @@ public class Login extends AppCompatActivity{
         btnSignIn = (Button) findViewById(R.id.btnSignIn);
         etUserName = (EditText) findViewById(R.id.etUserName);
         etPass = (EditText) findViewById(R.id.etPass);
-        coordinatorLayout = (CoordinatorLayout)findViewById(R.id.coordinateLayout);
 
-        user_login_table = Constants.USER_LOGIN_TABLE;
-        password_child   = Constants.PASSWORD_CHILD;
-        session_child    = Constants.SESSION_CHILD;
-        last_login_child = Constants.LAST_LOGIN_CHILD;
-        database_Url     = Constants.DATABASE_URL;
-        firebase_Url     = database_Url + user_login_table;
-        session_timeout  = Constants.SESSION_TIMEOUT;
         format           = new SimpleDateFormat(Constants.DATE_FORMAT);
         entered_user     = " ";
         entered_pass     = " ";
 
         Firebase.setAndroidContext(this);
-        ref = new Firebase(firebase_Url);
+        ref = new Firebase(Constants.DATABASE_URL + Constants.USER_LOGIN_TABLE);
 
         btnSignIn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -267,7 +238,6 @@ public class Login extends AppCompatActivity{
 
                 entered_user = etUserName.getText().toString();
                 entered_pass = etPass.getText().toString();
-
                 //only if connected
                 if (StaticUserMap.getInstance().getConnectedStatus()) {
 
@@ -276,7 +246,7 @@ public class Login extends AppCompatActivity{
                     authTask.execute(entered_user, entered_pass);
                 }
 
-                else Snackbar.make(coordinatorLayout, "No internet connection", Snackbar.LENGTH_SHORT).show();
+                else Snackbar.make(v, "No internet connection", Snackbar.LENGTH_SHORT).show();
                 //in this case the main UI does practically nothing
                 //but the catch is that it's not waiting for anyone. Fully responsive
             }
@@ -308,5 +278,3 @@ public class Login extends AppCompatActivity{
     //class ends
 
 }
-
-

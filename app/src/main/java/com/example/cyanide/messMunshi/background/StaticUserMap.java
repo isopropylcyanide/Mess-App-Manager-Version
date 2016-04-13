@@ -7,6 +7,7 @@ import java.util.Map;
 public class StaticUserMap {
 
     public class Rate_Quantity {
+
         private String cummQuantity;
         private String rate;
 
@@ -22,6 +23,17 @@ public class StaticUserMap {
         public String getRate() { return this.rate; }
     }
 
+    public static String _roll;
+    private static String _password;//private Data
+
+    public String get_password(){
+        return _password;
+    }
+
+    public void set_password(String pass){
+        _password = new String(pass);
+    }
+
     public static HashMap<String, Rate_Quantity> menuItems;
     public static HashMap<String, ArrayList<String> > rollRoomMap;
 
@@ -30,21 +42,7 @@ public class StaticUserMap {
         rollRoomMap = new HashMap<String, ArrayList<String>>();
     }
 
-    private static Map<String, Object> userStaticMap;
-    private static Map<String, Object> UserViewExtras;
     private static boolean netConnected;
-
-    public static String _userName;
-    public Map<String, Object> getUserViewExtras() {
-        return UserViewExtras;
-    }
-
-    public void setUserViewExtras(Map<String, Object> userViewExtras) {UserViewExtras = userViewExtras; }
-    public Map<String, Object> getUserMap(){
-        return userStaticMap;
-    }
-
-    public void setUserMap(Map<String,Object> userStaticMap){this.userStaticMap = userStaticMap;}
     public boolean getConnectedStatus(){return netConnected;}
 
     public void setConnectedStatus(boolean flag){netConnected = flag;}

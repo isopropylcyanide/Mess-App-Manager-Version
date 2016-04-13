@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 
@@ -35,12 +36,10 @@ public class UserView extends AppCompatActivity
         //An async class to deal with signing user out
         private ProgressDialog pd;
         private Context context;
-        private boolean net_connected;
 
         public Sign_out_async(Context context){
             this.context = context;
             pd = new ProgressDialog(context);
-            net_connected = StaticUserMap.getInstance().getConnectedStatus();
         }
 
         @Override
@@ -61,8 +60,8 @@ public class UserView extends AppCompatActivity
                 public void run() {
                     pd.dismiss();
 
-                    if(!net_connected)
-                        Toast.makeText(context, "Internet Disconnected. Try Again", Toast.LENGTH_SHORT).show();
+                    if (!StaticUserMap.getInstance().getConnectedStatus())
+                        Snackbar.make(getWindow().getDecorView(), "Connection Failed. Please Try Again Later.", Snackbar.LENGTH_SHORT).show();
 
                     else {
                         Intent intent = new Intent(context, Login.class);
@@ -70,27 +69,18 @@ public class UserView extends AppCompatActivity
                         finish();
                     }
                 }
-            }, 500);  // 500 milliseconds
+            }, 400);  // wait for this period atleast
         }
 
         @Override
         protected Void doInBackground(Void... params) {
 
-            Map< String, Object> userArgs = StaticUserMap.getInstance().getUserViewExtras();
-            Map< String, Object> userLogOut = StaticUserMap.getInstance().getUserMap();
-
-            Firebase update_ref = new Firebase(userArgs.get("EXTRA_FireBase_Node_Ref").toString());
-            String session_val = userArgs.get("EXTRA_Node_Session_Field").toString();
-
-            userLogOut.put(session_val, "1");
-            update_ref.updateChildren(userLogOut);
-            System.out.println("Signed out");
-            StaticUserMap.getInstance().setUserMap(userLogOut);
-
+            String username = StaticUserMap._roll;
+            Firebase update_ref = new Firebase(Constants.DATABASE_URL + Constants.USER_LOGIN_TABLE ).child(username);
+            update_ref.child(Constants.SESSION_CHILD).setValue("1");
             return null;
         }
     }
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
